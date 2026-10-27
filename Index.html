@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Study Assistant</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f5fb;color:#202746}
+header{background:#5146d8;color:white;padding:24px 18px}
+header h1{margin:0 0 8px;font-size:26px}
+header p{margin:0;color:#e6e4ff}
+main{max-width:850px;margin:20px auto;padding:0 14px}
+.card{background:white;padding:18px;border-radius:15px;margin-bottom:16px;box-shadow:0 3px 14px #2027460d}
+h2{font-size:19px;margin-top:0}
+textarea,input{width:100%;padding:12px;border:1px solid #ccd0e0;border-radius:9px;font:inherit;margin:7px 0}
+textarea{min-height:120px;resize:vertical}
+button{border:0;border-radius:9px;background:#5146d8;color:white;padding:12px 15px;font-size:15px;cursor:pointer;margin:4px 3px 4px 0}
+button.secondary{background:#e9e8ff;color:#3730a3}
+button.danger{background:#a52c42}
+.result{background:#f4f3ff;padding:13px;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere}
+.small{font-size:13px;color:#626a83}
+.task{padding:10px 0;border-bottom:1px solid #eee}
+footer{text-align:center;padding:24px;color:#626a83;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 AI Study Assistant</h1>
+  <p>Your mobile-friendly study companion</p>
+</header>
+
+<main>
+<section class="card">
+<h2>💬 Study Helper</h2>
+<p>Ask a study question. This starter version uses simple rules, not a live AI model.</p>
+<input id="question" placeholder="e.g. What is photosynthesis?">
+<button onclick="ask()">Ask Question</button>
+<div id="answer" class="result">Your explanation will appear here.</div>
+</section>
+
+<section class="card">
+<h2>📝 Notes Summarizer</h2>
+<p>Paste your lesson notes below.</p>
+<textarea id="notes" placeholder="Paste your notes here..."></textarea>
+<button onclick="summarize()">Summarize Notes</button>
+<button class="secondary" onclick="makeQuiz()">Create Quiz</button>
+<div id="summary" class="result">Your summary will appear here.</div>
+<div id="quiz"></div>
+</section>
+
+<section class="card">
+<h2>✅ My Study Tasks</h2>
+<input id="taskInput" placeholder="e.g. Revise biology chapter 2">
+<button onclick="addTask()">Add Task</button>
+<div id="tasks"></div>
+<button class="danger" onclick="clearTasks()">Clear All Tasks</button>
+</section>
+
+<section class="card">
+<h2>💾 My Saved Notes</h2>
+<p class="small">Notes and tasks are saved in this browser on this device.</p>
+<button class="secondary" onclick="saveNotes()">Save Notes</button>
+<button class="secondary" onclick="loadNotes()">Load Notes</button>
+<span id="saveStatus" class="small"></span>
+</section>
+
+<section class="card">
+<h2>ℹ️ About This Project</h2>
+<p>This student project demonstrates interactive web design, JavaScript, text processing, quiz generation, and browser storage.</p>
+<p class="small">Version 1.0 · Educational demonstration</p>
+</section>
+</main>
+<footer>Made for learning • AI Study Assistant</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function ask(){
+  const q=$("question").value.trim().toLowerCase();
+  let a="Try breaking your question into smaller parts. Review your class notes and look for a reliable textbook explanation.";
+  if(!q){a="Please enter a question first."}
+  else if(q.includes("photosynthesis"))
+    a="Photosynthesis is the process by which green plants use sunlight, water and carbon dioxide to make glucose and release oxygen.";
+  else if(q.includes("gravity"))
+    a="Gravity is the attractive force between objects with mass. Earth's gravity pulls objects toward its centre.";
+  else if(q.includes("computer") && q.includes("cpu"))
+    a="The CPU (Central Processing Unit) executes instructions and performs calculations. It is a key component of a computer.";
+  else if(q.includes("python"))
+    a="Python is a high-level programming language known for readable syntax. It is used in automation, data science and AI.";
+  else if(q.includes("water cycle"))
+    a="The water cycle includes evaporation, condensation, precipitation and collection. Solar energy drives much of this cycle.";
+  else if(q.includes("hello") || q.includes("hi "))
+    a="Hello! Enter a topic such as photosynthesis, gravity, Python or the water cycle to try a sample explanation.";
+  $("answer").textContent=a;
+}
+
+function getSentences(){
+  return $("notes").value.trim().split(/[.!?]+/)
+    .map(s=>s.trim()).filter(s=>s.length>15);
+}
+
+function summarize(){
+  const sentences=getSentences();
+  if(!sentences.length){
+    $("summary").textContent="Please enter a few complete sentences in your notes first.";
+    return;
+  }
+  const result=sentences.slice(0,3).map((s,i)=>(i+1)+". "+s).join("\n");
+  $("summary").textContent="Key points from your notes:\n\n"+result+
+    (sentences.length>3?"\n\nStarter summary: only the first three sentences are shown.":"");
+}
+
+function makeQuiz(){
+  const sentences=getSentences();
+  const box=$("quiz");
+  box.innerHTML="";
+  if(sentences.length<2){
+    box.textContent="Enter at least two sentences of notes to create a practice question.";
+    return;
+  }
+  const correct=sentences[0];
+  const options=[...new Set([correct,...sentences.slice(1)])]
+    .sort(()=>Math.random()-.5).slice(0,Math.min(4,sentences.length));
+  const title=document.createElement("p");
+  title.textContent="Which statement appears first in your notes?";
+  box.appendChild(title);
+  const form=document.createElement("div");
+  options.forEach(option=>{
+    const label=document.createElement("label");
+    label.style.display="block";
+    label.style.padding="8px";
+    const radio=document.createElement("input");
+    radio.type="radio";radio.name="quizChoice";radio.value=option;
+    radio.style.width="auto";
+    label.appendChild(radio);
+    label.appendChild(document.createTextNode(" "+option));
+    form.appendChild(label);
+  });
+  box.appendChild(form);
+  const btn=document.createElement("button");
+  btn.textContent="Check Answer";
+  btn.onclick=()=>{
+    const selected=form.querySelector('input[name="quizChoice"]:checked');
+    const result=document.createElement("p");
+    result.className="result";
+    result.textContent=!selected?"Choose an answer first.":
+      selected.value===correct?"Correct! 🎉":"Not quite. Review the first sentence of your notes.";
+    const old=box.querySelector(".result");
+    if(old)old.remove();
+    box.appendChild(result);
+  };
+  box.appendChild(btn);
+}
+
+let tasks=JSON.parse(localStorage.getItem("studyTasks")||"[]");
+function renderTasks(){
+  $("tasks").innerHTML="";
+  tasks.forEach((task,i)=>{
+    const row=document.createElement("div");
+    row.className="task";
+    const check=document.createElement("input");
+    check.type="checkbox";check.checked=task.done;
+    check.style.width="auto";
+    check.onchange=()=>{
+      tasks[i].done=check.checked;persistTasks();renderTasks();
+    };
+    const label=document.createElement("span");
+    label.textContent=" "+task.text;
+    if(task.done)label.style.textDecoration="line-through";
+    const del=document.createElement("button");
+    del.className="secondary";del.textContent="Delete";
+    del.onclick=()=>{tasks.splice(i,1);persistTasks();renderTasks()};
+    row.append(check,label,del);
+    $("tasks").appendChild(row);
+  });
+}
+function persistTasks(){
+  localStorage.setItem("studyTasks",JSON.stringify(tasks));
+}
+function addTask(){
+  const text=$("taskInput").value.trim();
+  if(!text)return;
+  tasks.push({text,done:false});
+  persistTasks();renderTasks();$("taskInput").value="";
+}
+function clearTasks(){
+  if(confirm("Delete all study tasks?")){
+    tasks=[];persistTasks();renderTasks();
+  }
+}
+function saveNotes(){
+  localStorage.setItem("studyNotes",$("notes").value);
+  $("saveStatus").textContent=" Notes saved!";
+}
+function loadNotes(){
+  $("notes").value=localStorage.getItem("studyNotes")||"";
+  $("saveStatus").textContent=" Notes loaded.";
+}
+renderTasks();
+</script>
+</body>
+  </html>
+  
